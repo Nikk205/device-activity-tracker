@@ -36,6 +36,7 @@ let isWhatsAppConnected = false;
 let isSignalConnected = false;
 let signalAccountNumber: string | null = null;
 let globalProbeMethod: ProbeMethod = 'delete'; // Default to delete method
+let currentWhatsAppQr: string | null = null; // Store current QR code for new clients
 
 // Platform type for contacts
 type Platform = 'whatsapp' | 'signal';
@@ -62,11 +63,13 @@ async function connectToWhatsApp() {
 
         if (qr) {
             console.log('QR Code generated');
+            currentWhatsAppQr = qr; // Store the QR code
             io.emit('qr', qr);
         }
 
         if (connection === 'close') {
             isWhatsAppConnected = false;
+            currentWhatsAppQr = null; // Clear QR on close
             const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
             console.log('connection closed, reconnecting ', shouldReconnect);
             if (shouldReconnect) {
@@ -74,6 +77,7 @@ async function connectToWhatsApp() {
             }
         } else if (connection === 'open') {
             isWhatsAppConnected = true;
+            currentWhatsAppQr = null; // Clear QR on successful connection
             console.log('opened connection');
             io.emit('connection-open');
         }
@@ -224,6 +228,11 @@ setInterval(checkSignalConnection, 5000);
 
 io.on('connection', (socket) => {
     console.log('Client connected');
+
+    // Send current WhatsApp QR code if available
+    if (currentWhatsAppQr) {
+        socket.emit('qr', currentWhatsAppQr);
+    }
 
     if (isWhatsAppConnected) {
         socket.emit('connection-open');

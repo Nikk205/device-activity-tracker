@@ -14,6 +14,7 @@ export interface ConnectionState {
     signalNumber: string | null;
     signalApiAvailable: boolean;
     signalQrImage: string | null;
+    whatsappQr: string | null;
 }
 
 function App() {
@@ -23,7 +24,8 @@ function App() {
         signal: false,
         signalNumber: null,
         signalApiAvailable: false,
-        signalQrImage: null
+        signalQrImage: null,
+        whatsappQr: null
     });
 
     const isAnyPlatformReady = connectionState.whatsapp || connectionState.signal;
@@ -40,12 +42,18 @@ function App() {
                 signal: false,
                 signalNumber: null,
                 signalApiAvailable: false,
-                signalQrImage: null
+                signalQrImage: null,
+                whatsappQr: null
             });
         }
 
         function onWhatsAppConnectionOpen() {
-            setConnectionState(prev => ({ ...prev, whatsapp: true }));
+            setConnectionState(prev => ({ ...prev, whatsapp: true, whatsappQr: null }));
+        }
+
+        function onWhatsAppQr(qr: string) {
+            console.log('[WHATSAPP] Received QR code');
+            setConnectionState(prev => ({ ...prev, whatsappQr: qr }));
         }
 
         function onSignalConnectionOpen(data: { number: string }) {
@@ -75,6 +83,7 @@ function App() {
 
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
+        socket.on('qr', onWhatsAppQr);
         socket.on('connection-open', onWhatsAppConnectionOpen);
         socket.on('signal-connection-open', onSignalConnectionOpen);
         socket.on('signal-disconnected', onSignalDisconnected);
@@ -89,6 +98,7 @@ function App() {
         return () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
+            socket.off('qr', onWhatsAppQr);
             socket.off('connection-open', onWhatsAppConnectionOpen);
             socket.off('signal-connection-open', onSignalConnectionOpen);
             socket.off('signal-disconnected', onSignalDisconnected);

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { socket, ConnectionState } from '../App';
+import { ConnectionState } from '../App';
 import { CheckCircle } from 'lucide-react';
 
 interface LoginProps {
@@ -8,19 +8,6 @@ interface LoginProps {
 }
 
 export function Login({ connectionState }: LoginProps) {
-    const [whatsappQr, setWhatsappQr] = useState<string | null>(null);
-
-    useEffect(() => {
-        function onWhatsAppQr(qr: string) {
-            setWhatsappQr(qr);
-        }
-
-        socket.on('qr', onWhatsAppQr);
-
-        return () => {
-            socket.off('qr', onWhatsAppQr);
-        };
-    }, []);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -40,8 +27,8 @@ export function Login({ connectionState }: LoginProps) {
                 ) : (
                     <>
                         <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                            {whatsappQr ? (
-                                <QRCodeSVG value={whatsappQr} size={256} />
+                            {connectionState.whatsappQr ? (
+                                <QRCodeSVG value={connectionState.whatsappQr} size={256} />
                             ) : (
                                 <div className="w-64 h-64 flex items-center justify-center text-gray-400">
                                     Waiting for QR Code...
